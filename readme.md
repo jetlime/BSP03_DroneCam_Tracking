@@ -16,7 +16,8 @@ In this repository you can find two folders :
         - faceDetection.py
             Creation of a tracking algorithm. Not optimised, it is really slow.
             Recognises face with a trained opencv model and then attempts to track them.
-            The script can recognise multiple persons in one video. In function of the person face size it will determine which person to follow.
+            The script can recognise multiple persons in one video. In function of the
+            person face size it will determine which person to follow.
             This file was just an experimentation.
         - haarcascade_frontalface_default.xml :
              XML file storing data (a lot) about
