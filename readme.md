@@ -4,8 +4,11 @@ BSP 03 of the student Paul Houssel
 
 This repository will explain the organisation of my technical 
 delivrable.
+
 In this repository you can find two folders :
+
     - AI :
+
         - edgeDetection.py :
             Python script I wrote in order to learn the opencv module on python.
             This script allows me to capture my webcan and recognise the edges present
