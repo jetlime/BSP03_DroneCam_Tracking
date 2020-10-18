@@ -1,7 +1,5 @@
 # Communication script with tello drone, connected via TELLO wifi network
 
-
-
 print ('\r\n\r\nTello drone communication tool\r\n')
 
 print("...importing modules...")
@@ -12,6 +10,7 @@ import sys
 import time
 import platform  
 import cv2
+
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 
@@ -40,6 +39,16 @@ print("UDP socket created")
 
 sock.bind(locaddr)
 
+height = 720
+width = 960
+middle_x_frame = height/2
+middle_y_frame = width/2
+
+def send(message) :
+    print('sending ' + message)
+    message = message.encode(encoding="utf-8") 
+    sent = sock.sendto(message, tello_address)
+
 
 def receiveStream() :
     print("...receiving stream...")
@@ -50,24 +59,24 @@ def receiveStream() :
         except Exception :
             print(Exception)
 
-
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.1, 4)
-        for (x,y,w,h) in faces :
-            cv2.rectangle(frame, (x,y), (x+w, y+h), (255,0,0), 3)
 
-            # compute the middle of the frame
-            height, width, channels = frame.shape
-            middle_x_frame = height/2
-            middle_y_frame = width/2
+        for (x,y,w,h) in faces :
+
             # middle of person
             middle_x = (x + w)/2
             middle_y = (y + h)/2
+            print(middle_y)
             # offset between center and person
             offset_x = middle_x - middle_x_frame
-            offset_y = middle_y - middle_y_frame         
-          
-
+            offset_y = middle_y - middle_y_frame        
+            
+            if offset_y <= 0 :
+                send("up 20")
+            elif offset_y > 0 :
+                send("down 20")
+            time.sleep(2)
         cv2.imshow("LiveStream", frame)
         
         if cv2.waitKey(25) & 0xFF == ord('q') :
@@ -76,24 +85,6 @@ def receiveStream() :
     cv2.destroyAllWindows()
  
 
-def detectPerson(x,y,w,h, frame):
-    cv2.rectangle(frame, (x,y), (x+w, y+h), (255,0,0), 3)
-
-    # compute the middle of the frame
-    height, width, channels = frame.shape
-    middle_x_frame = height/2
-    middle_y_frame = width/2
-    # middle of person
-    middle_x = (x + w)/2
-    middle_y = (y + h)/2
-    # offset between center and person
-    offset_x = middle_x - middle_x_frame
-    offset_y = middle_y - middle_y_frame
-
-
-    scale = w-x
-    cv2.putText(frame, "Followed Person", (x,y-10), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0,0,255), 2)
-    
 def receiving():
     while True: 
         try:
@@ -102,22 +93,6 @@ def receiving():
         except Exception:
             print ('\nExit . . .\n')
             break
-
-def battery_level() :
-    # autoland if batterylevel is below 5 percent
-    while True :
-        msg = "battery?"
-        msg = msg.encode(encoding="utf-8") 
-        sent = sock.sendto(msg, tello_address)
-        data, server = sock.recvfrom(1518)
-        batteryLevel = data.decode(encoding="utf-8")
-        print("The battery level is sufficient, " + batteryLevel + " %")
-       
-        if int(batteryLevel) < 5 :
-            msg = "land"
-            msg = msg.encode(encoding="utf-8") 
-            sent = sock.sendto(msg, tello_address)
-       
 
 receiveStreamThread = threading.Thread(target=receiveStream)
 print ("...initialiazing connection with tello drone...")
@@ -143,14 +118,13 @@ batteryThread.start()
 while True :
     message = input(str("Enter a command :\r\n"))
     if message == "streamon":
-        message = message.encode(encoding="utf-8")         
-        sent = sock.sendto(message, tello_address)
+        send(message)
         time.sleep(3)
         receiveStreamThread.start()
-
+    elif message == "q" :
+        send("land")
     else :    
-        message = message.encode(encoding="utf-8") 
-        sent = sock.sendto(message, tello_address)
+        send(message)
 
 
 
