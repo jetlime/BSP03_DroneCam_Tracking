@@ -11,7 +11,6 @@ from functools import partial
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-droneTookOf = False
 
 height = 720
 width = 960
@@ -66,6 +65,7 @@ def receiving():
 
 def takeoff() :
     droneTookOf = True
+    print(droneTookOf)
     send("takeoff")
 
 def up(y) : 
@@ -89,14 +89,19 @@ def forward() :
 def back() :
     send("back 20")
 
+def rotate() :
+    send("rotate")
+
 def stream() :
+    send('streamoff')
     send("streamon")
     streambeginThread = threading.Thread(target=streamBegin)
     streambeginThread.start()
     
 def exitt() :
-    exit()
     send("streamoff")
+    exit()
+    
 
 def streamBegin() : 
     while True :        
@@ -104,23 +109,27 @@ def streamBegin() :
             ret, frame = drone_videostream.read()
         except Exception :
             print(Exception)
-        
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.1, 4)
-        if droneTookOf :
-            for (x,y,w,h) in faces :
+    
+        for (x,y,w,h) in faces :
 
-                # middle of person
-                middle_x = (x + w)/2
-                middle_y = (y + h)/2
-                # offset between center and person
-                offset_x = middle_x - middle_x_frame
-                offset_y = middle_y - middle_y_frame        
-                if offset_y > -180 :
-                    down(20)
-                elif offset_y < -200 :
-                    up(20)    
-                time.sleep(2)
+            # middle of person
+            middle_x = (x + (x+w))/2
+            middle_y = (y + (y+h))/2
+            # offset between center and person
+            offset_x = (middle_x - middle_x_frame)+40
+            offset_y = (middle_y - middle_y_frame)+240  
+            cv2.rectangle(frame, (x,y), (x+w, y+h), (255,0,0), 1, 1)
+            offset_z = w
+            print(offset_x)  
+            '''          
+            if offset_x > 30 :
+                right()
+            elif offset_x < -30 :
+                left()    
+          '''
+            
 
         cv2.imshow("LiveStream", frame)
         

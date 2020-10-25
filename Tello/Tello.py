@@ -65,18 +65,19 @@ def receiveStream() :
         for (x,y,w,h) in faces :
 
             # middle of person
-            middle_x = (x + w)/2
-            middle_y = (y + h)/2
-            print(middle_y)
-            # offset between center and person
-            offset_x = middle_x - middle_x_frame
-            offset_y = middle_y - middle_y_frame        
+            middle_x = (x + (x+w))/2
+            middle_y = (y + (y+h))/2
             
+            # offset between center and person
+            offset_x = (middle_x - middle_x_frame)+ 40
+            offset_y = (middle_y - middle_y_frame) + 240        
+            '''
             if offset_y <= 0 :
                 send("up 20")
             elif offset_y > 0 :
                 send("down 20")
             time.sleep(2)
+            '''
         cv2.imshow("LiveStream", frame)
         
         if cv2.waitKey(25) & 0xFF == ord('q') :
