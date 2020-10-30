@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 import cv2
 import tkinter as tk
 import tkinter.messagebox
@@ -9,6 +10,7 @@ import sys
 import platform  
 from functools import partial
 from djitellopy import Tello
+
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
@@ -129,6 +131,14 @@ def updateFollowMode() :
             but14=tk.Button(l,padx=5,pady=5,width=14,bg='red',fg='black',relief=tk.GROOVE,command=followMode,text="Follow mode Off",font=('helvetica 15 bold'))    
         but14.place(x = 1100, y = 0)
         time.sleep(0.5)
+def takePicture() :
+        now = datetime.now()
+        dateTime = now.strftime("%d_%m_%Y_%H_%M_%S")
+        frame_read = me.get_frame_read()
+        myFrame = frame_read.frame
+        isWritten = cv2.imwrite('C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images/' + dateTime +'he.png',myFrame)
+        if isWritten :
+            print("picture taken")
 
 def recordVideo() :
     global videoRecording
@@ -148,7 +158,10 @@ def updateRecordVideo() :
         time.sleep(1)
 
 def streamBegin() :  
-    writer= cv2.VideoWriter('basicvideo.mp4', cv2.VideoWriter_fourcc(*'DIVX'), 20, (680,480))
+    frame_read = me.get_frame_read()
+    myFrame = frame_read.frame
+
+    writer = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (400, 440))
  
     while True :
         frame_read = me.get_frame_read()
@@ -214,7 +227,7 @@ def streamBegin() :
         if cv2.waitKey(1) & 0xFF == ord('q') :
             me.land()
             break
-    
+    frame_read.release()
     writer.release()
     cv2.destroyAllWindows()
 
@@ -272,5 +285,8 @@ but12.place(x = 1100, y = 100)
 counterRotateWithArg = partial(counterRotate, 20)
 but13=tk.Button(l,padx=5,pady=5,width=10,bg='green',fg='black',relief=tk.GROOVE,command=counterRotateWithArg,text='Rotate to left',font=('helvetica 15 bold'))
 but13.place(x = 1100,y = 200)
+
+but16 = tk.Button(l,padx=5,pady=5,width=10,bg='green',fg='black',relief=tk.GROOVE,command=takePicture,text='Take a picture',font=('helvetica 15 bold'))
+but16.place(x = 700, y = 0)
 
 root.mainloop()
