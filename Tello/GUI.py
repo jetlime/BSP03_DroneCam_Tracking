@@ -2,7 +2,7 @@ import time
 from datetime import datetime
 import cv2
 import tkinter as tk
-import tkinter.messagebox
+from tkinter import messagebox
 import tkinter.ttk as ttk
 import threading
 import socket
@@ -138,7 +138,7 @@ def takePicture() :
         myFrame = frame_read.frame
         isWritten = cv2.imwrite('C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images/' + dateTime +'he.png',myFrame)
         if isWritten :
-            print("picture taken")
+            messagebox.showinfo("Information","Picture was taken")
 
 def recordVideo() :
     global videoRecording
