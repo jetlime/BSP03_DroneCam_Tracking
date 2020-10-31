@@ -3,14 +3,16 @@ from datetime import datetime
 import cv2
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 import tkinter.ttk as ttk
 import threading
 import socket
 import sys
+import os
 import platform  
 from functools import partial
 from djitellopy import Tello
-
+from PIL import Image, ImageTk
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
@@ -31,6 +33,47 @@ me.streamon()
 
 root= tk.Tk()
 root.geometry('1366x768')
+
+root2 = tk.Tk()
+imageLabel = tk.Label(root2)
+
+def viewImages() :
+    fln = filedialog.askopenfilename( initialdir= "C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images", title= "Please select a file:")
+    img = Image.open(fln)
+    img.thumbnail((350,350))
+    img = ImageTk.PhotoImage(img)
+    imageLabel.configure(image=img)
+    imageLabel.image = img
+
+def openImageBrowser() :
+    root2.geometry('300x350')
+    imageFrame = tk.Frame(root2)
+    imageFrame.pack(side = tk.BOTTOM, padx = 15, pady = 15)
+    imageLabel.pack()
+    btn = tk.Button(imageFrame, text = 'Browse Image', command = viewImages)
+    btn.pack(side = tk.LEFT, padx = 10)
+    
+
+def viewVideos() :
+    pass
+
+
+
+menu_nav = tk.Menu(root)
+root.config(menu = menu_nav)
+#Create a menu item
+menu_files = tk.Menu(menu_nav)
+menu_nav.add_cascade(label = "File", menu = menu_files)
+menu_files.add_command(label = 'View Images', command = openImageBrowser)
+menu_files.add_separator()
+menu_files.add_command(label = 'View Videos', command = viewVideos)
+menu_files.add_separator()
+menu_files.add_command(label = "Exit", command = root.quit)
+
+menu_parameters = tk.Menu(menu_nav)
+menu_nav.add_cascade(label = 'Parameters', menu = menu_parameters)
+menu_parameters.add_checkbutton(label = 'Safe fly mode')
+
 frame = tk.Frame(root, relief=tk.RIDGE, borderwidth=2)
 frame.pack(fill=tk.BOTH,expand=1)
 root.title('Tello Drone')
