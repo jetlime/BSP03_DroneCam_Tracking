@@ -77,41 +77,53 @@ menu_parameters.add_checkbutton(label = 'Safe fly mode')
 frame = tk.Frame(root, relief=tk.RIDGE, borderwidth=2)
 frame.pack(fill=tk.BOTH,expand=1)
 root.title('Tello Drone')
-frame.config(background='light blue')
+frame.config(background='white')
+
+topFrame = tk.Frame(frame, bg = 'gray')
+topFrame.pack(side = "top", fill = tk.X)
+
+homeLabel = tk.Label(topFrame, text = "Tello drone Command Pannel", font = "Bahnschrift 15", bg = "gray", fg = "gray17", height = "2", padx = 20)
+homeLabel.pack(side = "right")
+
 s = ttk.Style()
 s.theme_use('clam')
 s.configure("TProgressbar", foreground='red', background='red')
 
 def labelling() :
     while True :
-        batteryLevel = int(me.get_battery())
+        try :
+            batteryLevel = int(me.get_battery())
+        except :
+            pass
         if batteryLevel > 50 :
             s.configure("TProgressbar", foreground='red', background='green')
         elif batteryLevel > 20 and batteryLevel <= 50 :
             s.configure("TProgressbar", foreground='red', background='orange')
         else :
             s.configure("TProgressbar", foreground='red', background='red')
+        try:            
+            if me.get_wifi() :
+                label4 = tk.Label(frame, text = 'Drone connected' , width = '90', font=("Courier", 18), bg = "green")
+                label1 = tk.Label(frame, text = 'Battery level : ' + str(batteryLevel) + "%", width = '90', font=("Courier", 18))
+                progressbar1 = ttk.Progressbar(frame, style = "TProgressbar", orient = tk.HORIZONTAL, length = 600, mode = 'determinate', value = str(batteryLevel))
+                label2 = tk.Label(frame, text = 'Height :' + str(me.get_height()), width = '90', font=("Courier", 18))
+                label3 = tk.Label(frame, text = 'Flight Time :' + str(me.get_flight_time()), width = '90', font=("Courier", 18))
+                progressbar1.place(x = 350, y = 128)
+            else :
+                label4 = tk.Label(frame, text = 'Drone not connected' , width = '90', font=("Courier", 18), bg = "red")
+                label1 = tk.Label(frame, text = 'Battery level : connect drone to see information ', width = '90', font=("Courier", 18))
+                label5 = tk.Label(frame, text = ' ', width = '90', font=("Courier", 18))
+                label2 = tk.Label(frame, text = 'Height : connect drone to see information', width = '90', font=("Courier", 18))
+                label3 = tk.Label(frame, text = 'Flight Time : connect drone to see information', width = '90', font=("Courier", 18))        
+                label5.place(x = 30, y = 120)
 
-        if me.get_wifi() :
-            label4 = tk.Label(frame, text = 'Drone connected' , width = '90', font=("Courier", 18), bg = "green")
-            label1 = tk.Label(frame, text = 'Battery level : ' + str(batteryLevel) + "%", width = '90', font=("Courier", 18))
-            progressbar1 = ttk.Progressbar(frame, style = "TProgressbar", orient = tk.HORIZONTAL, length = 600, mode = 'determinate', value = str(batteryLevel))
-            label2 = tk.Label(frame, text = 'Height :' + str(me.get_height()), width = '90', font=("Courier", 18))
-            label3 = tk.Label(frame, text = 'Flight Time :' + str(me.get_flight_time()), width = '90', font=("Courier", 18))
-            progressbar1.place(x = 350, y = 68)
-        else :
-            label4 = tk.Label(frame, text = 'Drone not connected' , width = '90', font=("Courier", 18), bg = "red")
-            label1 = tk.Label(frame, text = 'Battery level : connect drone to see information ', width = '90', font=("Courier", 18))
-            label5 = tk.Label(frame, text = ' ', width = '90', font=("Courier", 18))
-            label2 = tk.Label(frame, text = 'Height : connect drone to see information', width = '90', font=("Courier", 18))
-            label3 = tk.Label(frame, text = 'Flight Time : connect drone to see information', width = '90', font=("Courier", 18))        
-            label5.place(x = 30, y = 60)
-
-        label1.place(x = 30, y = 30)
-        label2.place(x = 30, y = 90)
-        label3.place(x = 30, y = 120)
-        label4.place(x = 30, y = 0)
-        time.sleep(5)
+            label1.place(x = 30, y = 90)
+            label2.place(x = 30, y = 150)
+            label3.place(x = 30, y = 180)
+            label4.place(x = 30, y = 60)
+        except : 
+            pass
+        time.sleep(2)
 
 labellingThread = threading.Thread(target= labelling)
 labellingThread.start()
@@ -120,11 +132,6 @@ def stream() :
     streambeginThread = threading.Thread(target=streamBegin)
     streambeginThread.start()
     
-def exitt() :
-    me.streamoff()
-    exit()
-    
-
 def takeoff() :
     me.takeoff()
 
@@ -217,7 +224,7 @@ def streamBegin() :
             writer.write(myFrame)
         if followmode :
             for (x,y,w,h) in faces :
-                    if w > 100 :
+                    if w > 30 :
                         # middle of person
                         middle_x = (x + (w/2))
                         middle_y = (y + (h/2))
@@ -248,9 +255,9 @@ def streamBegin() :
                         elif dir == 2 :
                             me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 30
                         elif dir == 3 : 
-                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 70; me.yaw_velocity = 0
+                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 20; me.yaw_velocity = 0
                         elif dir == 4 :
-                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = -70; me.yaw_velocity = 0
+                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = -20; me.yaw_velocity = 0
                         elif dir == 0 :
                             me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
                         elif dir == 5 :
@@ -309,9 +316,6 @@ but7.place(x=20,y=10)
 
 but8=tk.Button(l,padx=5,pady=5,width=10,bg='green',fg='black',relief=tk.GROOVE,command=stream,text='Turn on Cam',font=('helvetica 15 bold'))
 but8.place(x=20,y=150)
-
-but9=tk.Button(l,padx=5,pady=5,width=10,bg='red',fg='black',relief=tk.GROOVE,command=exitt,text='Exit',font=('helvetica 15 bold'))
-but9.place(x=20,y=225)
 
 upwithArg = partial(up, 20)
 but10=tk.Button(l,padx=5,pady=5,width=10,bg='green',fg='black',relief=tk.GROOVE,command=upwithArg,text='Up',font=('helvetica 15 bold'))
