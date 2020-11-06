@@ -33,25 +33,28 @@ me.streamon()
 
 root= tk.Tk()
 root.geometry('1366x768')
-
 root2 = tk.Tk()
 imageLabel = tk.Label(root2)
+root2.geometry('1366x768')
 
 def viewImages() :
     fln = filedialog.askopenfilename( initialdir= "C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images", title= "Please select a file:")
-    img = Image.open(fln)
-    img.thumbnail((350,350))
-    img = ImageTk.PhotoImage(img)
-    imageLabel.configure(image=img)
-    imageLabel.image = img
+    load = Image.open(fln)
+   
+    render = ImageTk.PhotoImage(load, master = root2)
+    img = tk.Label(root2, image=render)
+    img.image = render
+    img.place(x=100, y=0)
+    img.pack(padx = 20, pady = 20)
 
-def openImageBrowser() :
-    root2.geometry('300x350')
+def openImageBrowser() :    
+    
     imageFrame = tk.Frame(root2)
     imageFrame.pack(side = tk.BOTTOM, padx = 15, pady = 15)
     imageLabel.pack()
     btn = tk.Button(imageFrame, text = 'Browse Image', command = viewImages)
     btn.pack(side = tk.LEFT, padx = 10)
+    
     
 
 def viewVideos() :
