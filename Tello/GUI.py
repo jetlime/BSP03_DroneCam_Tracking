@@ -182,13 +182,17 @@ def updateFollowMode() :
         but14.place(x = 1100, y = 0)
         time.sleep(0.5)
 def takePicture() :
-        now = datetime.now()
-        dateTime = now.strftime("%d_%m_%Y_%H_%M_%S")
-        frame_read = me.get_frame_read()
-        myFrame = frame_read.frame
-        isWritten = cv2.imwrite('C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images/' + dateTime +'he.png',myFrame)
-        if isWritten :
-            messagebox.showinfo("Information","Picture was taken")
+        if me.get_wifi() :
+            now = datetime.now()
+            dateTime = now.strftime("%d_%m_%Y_%H_%M_%S")
+            frame_read = me.get_frame_read()
+            myFrame = frame_read.frame
+            isWritten = cv2.imwrite('C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images/' + dateTime +'he.png',myFrame)
+            if isWritten :
+                messagebox.showinfo("Information","Picture was taken")
+        else :
+            messagebox.showinfo('Error', "Connect drone to take picture")
+        
 
 def recordVideo() :
     global videoRecording
@@ -201,25 +205,32 @@ def updateRecordVideo() :
     while True :
         if videoRecording :
             but15 = tk.Button(l, padx = 5, pady=5, width=15,bg='green',fg='black',relief=tk.GROOVE,command= recordVideo,text='Video is recording...',font=('helvetica 15 bold'))
-            but15.place(x = 900, y = 0)
+            but15.place(x = 1100, y = 200)
         else : 
             but15 = tk.Button(l, padx = 5, pady=5, width=15,bg='green',fg='black',relief=tk.GROOVE,command= recordVideo,text='Record Video',font=('helvetica 15 bold'))
-            but15.place(x = 900, y = 0)
+            but15.place(x = 1100, y =200)
         time.sleep(1)
 
 def streamBegin() :  
     frame_read = me.get_frame_read()
     myFrame = frame_read.frame
     tracking = False
+    #tracker = cv2.TrackerMOSSE_create()
+    bbox = (0,0,0,0)
     writer = cv2.VideoWriter(
         'output.avi',
         cv2.VideoWriter_fourcc(*'MJPG'),
         15.,
         (640,480))
-
+    #trackerinit = False
     while True :
         frame_read = me.get_frame_read()
         myFrame = frame_read.frame
+        '''
+        if trackerinit == False :
+            tracker.init(myFrame, bbox)
+            trackerinit = True
+        '''
         gray = cv2.cvtColor(myFrame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.1, 4)
         me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
@@ -228,7 +239,13 @@ def streamBegin() :
             writer.write(gray.astype('uint8'))
         if tracking == False :
             if followmode :
-                for (x,y,w,h) in faces :
+                followedFace = [(0,0,0,0)]
+                facesTuples = list(map(tuple,faces))
+                for (x,y,w,h) in facesTuples :
+                    if w > followedFace[0][2] :
+                        followedFace = [(x,y,w,h)]
+                        print(followedFace)
+                for (x,y,w,h) in followedFace :
                         if w > 30 :
                             # middle of person
                             middle_x = (x + (w/2))
@@ -269,19 +286,22 @@ def streamBegin() :
                                 me.left_right_velocity = 0; me.for_back_velocity = 30; me.up_down_velocity = 0; me.yaw_velocity = 0
                             elif dir == 6 :
                                 me.left_right_velocity = 0; me.for_back_velocity = -30; me.up_down_velocity = 0; me.yaw_velocity = 0
+                '''
                 if len(faces) == 1 :
                     trackedface = list(map(tuple,faces))
-                    print(trackedface)
+                    bbox = trackedface
                     tracking = True
-        
+                '''
                             
                 reactThread = threading.Thread(target=react, args=(me.left_right_velocity, me.for_back_velocity, me.up_down_velocity, me.yaw_velocity))
                 
                 if me.send_rc_control :
                     reactThread.start()
         elif tracking :    
+            #success, bbox = tracker.update(myFrame)   
             if followmode :
-                for (x,y,w,h) in trackedface :
+                for (x,y,w,h) in trackedface :                                
+                    
                         if w > 30 :
                             # middle of person
                             middle_x = (x + (w/2))
@@ -327,7 +347,12 @@ def streamBegin() :
                 
                 if me.send_rc_control :
                     reactThread.start()
-        
+
+                #ok, bbox = tracker.update(myFrame)
+            '''
+            else :
+                tracking = False
+            '''
         cv2.imshow("Result", myFrame)
 
         if cv2.waitKey(1) & 0xFF == ord('q') :
@@ -383,13 +408,13 @@ but11.place(x=450,y=200)
 
 rotateWithArg = partial(rotate, 20)
 but12=tk.Button(l,padx=5,pady=5,width=10,bg='green',fg='black',relief=tk.GROOVE,command=rotateWithArg,text='Rotate to right',font=('helvetica 15 bold'))
-but12.place(x = 1100, y = 100)
+but12.place(x = 600, y = 0)
 
 counterRotateWithArg = partial(counterRotate, 20)
 but13=tk.Button(l,padx=5,pady=5,width=10,bg='green',fg='black',relief=tk.GROOVE,command=counterRotateWithArg,text='Rotate to left',font=('helvetica 15 bold'))
-but13.place(x = 1100,y = 200)
+but13.place(x = 300,y = 0)
 
 but16 = tk.Button(l,padx=5,pady=5,width=10,bg='green',fg='black',relief=tk.GROOVE,command=takePicture,text='Take a picture',font=('helvetica 15 bold'))
-but16.place(x = 700, y = 0)
+but16.place(x = 1100, y = 100)
 
 root.mainloop()
