@@ -234,6 +234,8 @@ def streamBegin() :
         gray = cv2.cvtColor(myFrame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.1, 4)
         me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
+
+        cv2.circle(myFrame, (600,600), 3, (255, 0, 0), 5)
         if videoRecording :
             print("recording")
             writer.write(gray.astype('uint8'))
@@ -265,7 +267,7 @@ def streamBegin() :
                             elif middle_y > 380:
                                 #print("Go Down")
                                 dir = 4
-                            elif w > 350 :
+                            elif w > q0 :
                                 dir = 5
                             elif w < 250 :
                                 dir = 6
