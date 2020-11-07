@@ -1,10 +1,13 @@
 import cv2
 import threading
 import time
+from functools import partial
+
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 recognisedFace = (0,0,0,0)
 timing = True 
 trackerCreated = False
+checkLossMethodLaunched = False
 cap = cv2.VideoCapture(0)
 
 
@@ -25,8 +28,22 @@ def timingTracking() :
             timing = False
             time.sleep(5)
 
+def checkLoss(face) :
+    checkLossMethodLaunched = True
+    global bbox
+    time.sleep(2)
+    if face == bbox :
+        print("Face lost")
+        timing = True
+
+    if face == (0,0,0,0) :
+        print("facelost")
+        timing = True
+
+
 timeThread = threading.Thread(target=timingTracking)
 timeThread.start()
+
 while True :
     _ , img = cap.read()
     if timing == False :
@@ -48,11 +65,16 @@ while True :
         for (x,y,w,h) in faces :
             cv2.rectangle(img, (x,y), ((x+w), (y+h)), (255,255,255), 3, 1)
             cv2.putText(img, "Recognition", (175,75), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0,255,0), 2)
-        recognisedFace = (x,y,w,h)
+            recognisedFace = (x,y,w,h)
         
     else : 
         if "success" in globals() :
             drawBox(img, bbox)
+            if not(checkLossMethodLaunched) :
+                checkLossWithArg = partial(checkLoss, bbox)
+                checkLossThread = threading.Thread(target=checkLossWithArg)
+                checkLossThread.start()
+
         else :  
             cv2.putText(img, "Lost", (75,75), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0,0,255), 2)
 
