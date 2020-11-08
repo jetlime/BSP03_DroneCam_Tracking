@@ -59,14 +59,17 @@ def timingTracking() :
 
 def checkLoss(face) :
     checkLossMethodLaunched = True
+    
+    if face == (0,0,0,0) :
+        print("facelost")
+        timing = True
+
     time.sleep(2)
+
     if face == bbox :
         print("Face lost")
         timing = True
 
-    if face == (0,0,0,0) :
-        print("facelost")
-        timing = True
 
 def viewImages() :
     fln = filedialog.askopenfilename( initialdir= "C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images", title= "Please select a file:")
@@ -357,7 +360,7 @@ def streamBegin() :
                     x,y,w,h = int(bbox[0]),int(bbox[1]),int(bbox[2]),int(bbox[3])
                     cv2.rectangle(myFrame, (x,y), ((x+w), (y+h)), (255,0,255), 3, 1)
                     cv2.putText(myFrame, "Tracking", (75,75), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0,255,0), 2)
-                    if not(checkLossMethodLaunched) :
+                    if checkLossMethodLaunched == False :
                         checkLossWithArg = partial(checkLoss, bbox)
                         checkLossThread = threading.Thread(target=checkLossWithArg)
                         checkLossThread.start()
