@@ -24,6 +24,7 @@ recognisedFace = (0,0,0,0)
 timing = True 
 trackerCreated = False
 checkLossMethodLaunched = False
+bbox = (0,0,0,0)
 
 me = Tello()
 me.connect()
@@ -43,6 +44,29 @@ root.geometry('1366x768')
 root2 = tk.Tk()
 imageLabel = tk.Label(root2)
 root2.geometry('1366x768')
+
+
+def timingTracking() :
+    time.sleep(2)
+    global timing
+    while True :
+        if timing == False :
+            timing = True 
+            time.sleep(1)
+        elif timing :   
+            timing = False
+            time.sleep(5)
+
+def checkLoss(face) :
+    checkLossMethodLaunched = True
+    time.sleep(2)
+    if face == bbox :
+        print("Face lost")
+        timing = True
+
+    if face == (0,0,0,0) :
+        print("facelost")
+        timing = True
 
 def viewImages() :
     fln = filedialog.askopenfilename( initialdir= "C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images", title= "Please select a file:")
@@ -68,6 +92,9 @@ def viewVideos() :
     pass
 
 
+
+timeThread = threading.Thread(target=timingTracking)
+timeThread.start()
 
 menu_nav = tk.Menu(root)
 root.config(menu = menu_nav)
@@ -225,79 +252,163 @@ def streamBegin() :
     frame_read = me.get_frame_read()
     myFrame = frame_read.frame
     tracking = False
-    bbox = (0,0,0,0)
     writer = cv2.VideoWriter(
         'output.avi',
         cv2.VideoWriter_fourcc(*'MJPG'),
         15.,
         (640,480))
     while True :
+        global bbox
+        global trackerCreated
+        global recognisedFace
+        global success
         frame_read = me.get_frame_read()
         myFrame = frame_read.frame
         gray = cv2.cvtColor(myFrame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.1, 4)
         me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
+        # check if its the time for the tracker
+        # tracker = False is equivalent to tracker takes place of detection
+        if followmode :
+            if timing == False :
+                # check if the tracker was already created
+                if trackerCreated == False :
+                    tracker = cv2.TrackerMOSSE_create()
+                    frame_read = me.get_frame_read()
+                    myFrame = frame_read.frame
+                    success = True
+                    
+                    bbox = recognisedFace
+                    try :
+                        tracker.init(frame_read.frame, bbox)
+                    except :
+                        pass
+                    trackerCreated = True 
+                    print(bbox)
 
+        # check if the tracker was already created
+        if followmode :
+            if trackerCreated :
+                success, bbox = tracker.update(myFrame)
         if videoRecording :
             print("recording")
             writer.write(gray.astype('uint8'))
 
-            
-        if followmode :
-            followedFace = [(0,0,0,0)]
-            facesTuples = list(map(tuple,faces))
-            for (x,y,w,h) in facesTuples :
-                if w > followedFace[0][2] :
-                    followedFace = [(x,y,w,h)]
-                    print(followedFace)
-            for (x,y,w,h) in followedFace :                                
-                
-                    if w > 30 :
-                        # middle of person
-                        middle_x = (x + (w/2))
-                        middle_y = (y + (h/2))
-                        
-                        cv2.rectangle(myFrame, (x,y), (x+w, y+h), (255,0,0), 1, 1)
+        if timing :
+            trackerCreated = False
+            if followmode :
+                followedFace = [(0,0,0,0)]
+                facesTuples = list(map(tuple,faces))
+                for (x,y,w,h) in facesTuples :
+                    if w > followedFace[0][2] :
+                        followedFace = [(x,y,w,h)]
+                for (x,y,w,h) in followedFace :                                
+                    
+                        if w > 30 :
+                            # middle of person
+                            middle_x = (x + (w/2))
+                            middle_y = (y + (h/2))
                             
-                        if middle_x < 400:
-                            #print("Go left")
-                            dir = 1
-                        elif middle_x > 500 :
-                            #print("Go right")
-                            dir = 2
-                        elif middle_y < 320 :
-                            #print("Go up")
-                            dir = 3 
-                        elif middle_y > 380:
-                            #print("Go Down")
-                            dir = 4
-                        elif w > 350 :
-                            dir = 5
-                        elif w < 250 :
-                            dir = 6
-                        else :
-                            dir = 0
-                        
-                        if dir == 1 : 
-                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = -30
-                        elif dir == 2 :
-                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 30
-                        elif dir == 3 : 
-                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 20; me.yaw_velocity = 0
-                        elif dir == 4 :
-                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = -20; me.yaw_velocity = 0
-                        elif dir == 0 :
-                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
-                        elif dir == 5 :
-                            me.left_right_velocity = 0; me.for_back_velocity = 30; me.up_down_velocity = 0; me.yaw_velocity = 0
-                        elif dir == 6 :
-                            me.left_right_velocity = 0; me.for_back_velocity = -30; me.up_down_velocity = 0; me.yaw_velocity = 0       
-                        
-            reactThread = threading.Thread(target=react, args=(me.left_right_velocity, me.for_back_velocity, me.up_down_velocity, me.yaw_velocity))
+                            cv2.rectangle(myFrame, (x,y), (x+w, y+h), (255,0,0), 3, 1)
+                            cv2.putText(myFrame, "Recognition", (175,75), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0,255,0), 2)
+                            recognisedFace = (x,y,w,h)   
+
+                            if middle_x < 400:
+                                #print("Go left")
+                                dir = 1
+                            elif middle_x > 500 :
+                                #print("Go right")
+                                dir = 2
+                            elif middle_y < 320 :
+                                #print("Go up")
+                                dir = 3 
+                            elif middle_y > 380:
+                                #print("Go Down")
+                                dir = 4
+                            elif w > 350 :
+                                dir = 5
+                            elif w < 250 :
+                                dir = 6
+                            else :
+                                dir = 0
+                            
+                            if dir == 1 : 
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = -30
+                            elif dir == 2 :
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 30
+                            elif dir == 3 : 
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 20; me.yaw_velocity = 0
+                            elif dir == 4 :
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = -20; me.yaw_velocity = 0
+                            elif dir == 0 :
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
+                            elif dir == 5 :
+                                me.left_right_velocity = 0; me.for_back_velocity = 30; me.up_down_velocity = 0; me.yaw_velocity = 0
+                            elif dir == 6 :
+                                me.left_right_velocity = 0; me.for_back_velocity = -30; me.up_down_velocity = 0; me.yaw_velocity = 0       
+                            
+                reactThread = threading.Thread(target=react, args=(me.left_right_velocity, me.for_back_velocity, me.up_down_velocity, me.yaw_velocity))
+                
+                if me.send_rc_control :
+                    reactThread.start()
+        else : 
+            if followmode :
+                if "success" in globals() :
+                    x,y,w,h = int(bbox[0]),int(bbox[1]),int(bbox[2]),int(bbox[3])
+                    cv2.rectangle(myFrame, (x,y), ((x+w), (y+h)), (255,0,255), 3, 1)
+                    cv2.putText(myFrame, "Tracking", (75,75), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0,255,0), 2)
+                    if not(checkLossMethodLaunched) :
+                        checkLossWithArg = partial(checkLoss, bbox)
+                        checkLossThread = threading.Thread(target=checkLossWithArg)
+                        checkLossThread.start()
+                else :  
+                    cv2.putText(myFrame, "Lost", (75,75), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0,0,255), 2)
+
+                if followmode :                                               
+                        if w > 30 :
+                            # middle of person
+                            middle_x = (x + (w/2))
+                            middle_y = (y + (h/2))
+
+                            if middle_x < 400:
+                                #print("Go left")
+                                dir = 1
+                            elif middle_x > 500 :
+                                #print("Go right")
+                                dir = 2
+                            elif middle_y < 320 :
+                                #print("Go up")
+                                dir = 3 
+                            elif middle_y > 380:
+                                #print("Go Down")
+                                dir = 4
+                            elif w > 350 :
+                                dir = 5
+                            elif w < 250 :
+                                dir = 6
+                            else :
+                                dir = 0
+                            
+                            if dir == 1 : 
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = -30
+                            elif dir == 2 :
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 30
+                            elif dir == 3 : 
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 20; me.yaw_velocity = 0
+                            elif dir == 4 :
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = -20; me.yaw_velocity = 0
+                            elif dir == 0 :
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
+                            elif dir == 5 :
+                                me.left_right_velocity = 0; me.for_back_velocity = 30; me.up_down_velocity = 0; me.yaw_velocity = 0
+                            elif dir == 6 :
+                                me.left_right_velocity = 0; me.for_back_velocity = -30; me.up_down_velocity = 0; me.yaw_velocity = 0       
+                            
+                reactThread = threading.Thread(target=react, args=(me.left_right_velocity, me.for_back_velocity, me.up_down_velocity, me.yaw_velocity))
+                
+                if me.send_rc_control :
+                    reactThread.start()
             
-            if me.send_rc_control :
-                reactThread.start()
-        
         cv2.imshow("Result", myFrame)
 
         if cv2.waitKey(1) & 0xFF == ord('q') :
