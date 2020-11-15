@@ -46,16 +46,28 @@ imageLabel = tk.Label(root2)
 root2.geometry('1366x768')
 
 
+def pixelsToCm(x) :
+    y = x/3
+    if 0< y < 20 :
+        return 20
+    elif -20 < y < 0 :
+        return -20
+    elif y > 150 :
+        return 150
+    elif y < 150 :
+        return -150
+    return int(y)
+
 def timingTracking() :
-    time.sleep(2)
+    time.sleep(1)
     global timing
     while True :
         if timing == False :
             timing = True 
-            time.sleep(1)
+            time.sleep(0.1)
         elif timing :   
             timing = False
-            time.sleep(5)
+            time.sleep(2)
 
 def checkLoss(face) :
     checkLossMethodLaunched = True
@@ -270,6 +282,9 @@ def streamBegin() :
         gray = cv2.cvtColor(myFrame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.1, 4)
         me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
+        height, width, _ = myFrame.shape
+        cv2.circle(myFrame, (int(width/2),int(height/2)), 3, (255,0,0), 2)
+        
         # check if its the time for the tracker
         # tracker = False is equivalent to tracker takes place of detection
         if followmode :
@@ -298,6 +313,8 @@ def streamBegin() :
             writer.write(gray.astype('uint8'))
 
         if timing :
+            distance_x = int(recognisedFace[0]+(recognisedFace[2]/2)) - int(width/2)
+            distance_y = int(recognisedFace[1]+(recognisedFace[3]/2)) - int(height/2)
             trackerCreated = False
             if followmode :
                 followedFace = [(0,0,0,0)]
@@ -336,13 +353,13 @@ def streamBegin() :
                                 dir = 0
                             
                             if dir == 1 : 
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = -30
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = pixelsToCm(distance_x)
                             elif dir == 2 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 30
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = pixelsToCm(distance_x)
                             elif dir == 3 : 
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 20; me.yaw_velocity = 0
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = pixelsToCm(distance_y); me.yaw_velocity = 0
                             elif dir == 4 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = -20; me.yaw_velocity = 0
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = pixelsToCm(distance_y); me.yaw_velocity = 0
                             elif dir == 0 :
                                 me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
                             elif dir == 5 :
@@ -355,6 +372,8 @@ def streamBegin() :
                 if me.send_rc_control :
                     reactThread.start()
         else : 
+            distance_x = int(bbox[0]+(bbox[2]/2)) - int(width/2)
+            distance_y = int(bbox[1]+(bbox[3]/2)) - int(height/2)
             if followmode :
                 if "success" in globals() :
                     x,y,w,h = int(bbox[0]),int(bbox[1]),int(bbox[2]),int(bbox[3])
@@ -393,13 +412,13 @@ def streamBegin() :
                                 dir = 0
                             
                             if dir == 1 : 
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = -30
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = pixelsToCm(distance_x)
                             elif dir == 2 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 30
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = pixelsToCm(distance_x)
                             elif dir == 3 : 
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 20; me.yaw_velocity = 0
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = pixelsToCm(distance_y); me.yaw_velocity = 0
                             elif dir == 4 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = -20; me.yaw_velocity = 0
+                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = pixelsToCm(distance_y); me.yaw_velocity = 0
                             elif dir == 0 :
                                 me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
                             elif dir == 5 :
