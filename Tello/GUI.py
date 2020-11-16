@@ -14,11 +14,20 @@ from functools import partial
 from djitellopy import Tello
 from PIL import Image, ImageTk
 
+images = {}
+
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 videoRecording = False
+videoRecorded = False
 followmode = False 
 
+height = 720
+width = 960
+now = datetime.now()
+dateTime = now.strftime("%d_%m_%Y_%H_%M_%S")
+
+writer= cv2.VideoWriter('C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/videos/' + dateTime + 'Tello.avi', cv2.VideoWriter_fourcc(*'DIVX'), 20, (width,height))
 # variables required for tracking and detection mix
 recognisedFace = (0,0,0,0)
 timing = True 
@@ -54,7 +63,7 @@ def pixelsToCm(x) :
         return -20
     elif y > 150 :
         return 150
-    elif y < 150 :
+    elif y < -150 :
         return -150
     return int(y)
 
@@ -82,27 +91,34 @@ def checkLoss(face) :
         print("Face lost")
         timing = True
 
-
-def viewImages() :
-    fln = filedialog.askopenfilename( initialdir= "C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images", title= "Please select a file:")
-    load = Image.open(fln)
-   
-    render = ImageTk.PhotoImage(load, master = root2)
-    img = tk.Label(root2, image=render)
-    img.image = render
-    img.place(x=100, y=0)
-    img.pack(padx = 20, pady = 20)
+    
 
 def openImageBrowser() :    
-    
+    global images 
     imageFrame = tk.Frame(root2)
     imageFrame.pack(side = tk.BOTTOM, padx = 15, pady = 15)
     imageLabel.pack()
-    btn = tk.Button(imageFrame, text = 'Browse Image', command = viewImages)
-    btn.pack(side = tk.LEFT, padx = 10)
+    x = 0
+    i = 0
+    for path, subdirs, files in os.walk('C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images'):
+        for name in files:
+            print(os.path.join(path, name))
+            images[i] = os.path.join(path, name)
+            i += 1
+    g = 0
     
+    while g < i :
+        #fln = filedialog.askopenfilename( initialdir= "C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images", title= "Please select a file:")
+        load = Image.open(images[g])
+        load = load.resize((400, 400))
+        render = ImageTk.PhotoImage(load, master = root2)
+        img = tk.Label(root2, image=render)
+        img.image = render
+        img.place(x=x, y=0)
+        img.pack(padx = 0, pady = 20)
+        x += 20
+        g += 1
     
-
 def viewVideos() :
     pass
 
@@ -233,13 +249,14 @@ def updateFollowMode() :
             but14=tk.Button(l,padx=5,pady=5,width=14,bg='red',fg='black',relief=tk.GROOVE,command=followMode,text="Follow mode Off",font=('helvetica 15 bold'))    
         but14.place(x = 1100, y = 0)
         time.sleep(0.5)
+
 def takePicture() :
         if me.get_wifi() :
             now = datetime.now()
             dateTime = now.strftime("%d_%m_%Y_%H_%M_%S")
             frame_read = me.get_frame_read()
             myFrame = frame_read.frame
-            isWritten = cv2.imwrite('C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images/' + dateTime +'he.png',myFrame)
+            isWritten = cv2.imwrite('C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/images/' + dateTime +'Tello.png',myFrame)
             if isWritten :
                 messagebox.showinfo("Information","Picture was taken")
         else :
@@ -252,26 +269,30 @@ def recordVideo() :
         videoRecording = False 
     else : 
         videoRecording = True
+        videoRecorded = True
 
 def updateRecordVideo() :
     while True :
-        if videoRecording :
+        if videoRecorded :
+            but15 = tk.Button(l, padx = 5, pady=5, width=15,bg='green',fg='black',relief=tk.GROOVE,command= finishVideo,text='Video was recorded',font=('helvetica 15 bold'))
+            but15.place(x = 1100, y = 200)
+        elif videoRecording :
             but15 = tk.Button(l, padx = 5, pady=5, width=15,bg='green',fg='black',relief=tk.GROOVE,command= recordVideo,text='Video is recording...',font=('helvetica 15 bold'))
             but15.place(x = 1100, y = 200)
         else : 
             but15 = tk.Button(l, padx = 5, pady=5, width=15,bg='green',fg='black',relief=tk.GROOVE,command= recordVideo,text='Record Video',font=('helvetica 15 bold'))
             but15.place(x = 1100, y =200)
+
         time.sleep(1)
+
+def finishVideo() :
+    writer.release()
 
 def streamBegin() :  
     frame_read = me.get_frame_read()
     myFrame = frame_read.frame
     tracking = False
-    writer = cv2.VideoWriter(
-        'output.avi',
-        cv2.VideoWriter_fourcc(*'MJPG'),
-        15.,
-        (640,480))
+   
     while True :
         global bbox
         global trackerCreated
@@ -282,9 +303,7 @@ def streamBegin() :
         gray = cv2.cvtColor(myFrame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.1, 4)
         me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
-        height, width, _ = myFrame.shape
         cv2.circle(myFrame, (int(width/2),int(height/2)), 3, (255,0,0), 2)
-        
         # check if its the time for the tracker
         # tracker = False is equivalent to tracker takes place of detection
         if followmode :
@@ -310,7 +329,7 @@ def streamBegin() :
                 success, bbox = tracker.update(myFrame)
         if videoRecording :
             print("recording")
-            writer.write(gray.astype('uint8'))
+            writer.write(myFrame)
 
         if timing :
             distance_x = int(recognisedFace[0]+(recognisedFace[2]/2)) - int(width/2)
@@ -437,7 +456,6 @@ def streamBegin() :
             me.land()
             break
     frame_read.release()
-    writer.release()
     cv2.destroyAllWindows()
 
 

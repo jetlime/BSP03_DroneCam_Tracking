@@ -11,6 +11,10 @@ checkLossMethodLaunched = False
 cap = cv2.VideoCapture(0)
 
 
+width= int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height= int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+writer= cv2.VideoWriter('basicvideo.mp4', cv2.VideoWriter_fourcc(*'DIVX'), 20, (width,height))
 
 def isOverlapping(x1,y1,w1,h1,x2,y2,w2,h2) :
     if ((x1)<=x2<=(x1+w1) or x1<=(x2+w2)<=(w1+w1)) and (y1<=y2<=(y1+h2) or y1<=(y2+h2)<=(y1+h1)) :
@@ -76,8 +80,10 @@ while True :
 
     faces = face_cascade.detectMultiScale(gray, 1.1, 4)
 
-    height, width, _ = img.shape
+    
     cv2.circle(img, (int(width/2),int(height/2)), 3, (255,0,0), 2)
+
+    writer.write(img)
 
     if timing :
         trackerCreated = False
@@ -108,3 +114,4 @@ while True :
 
     if cv2.waitKey(1) & 0xff == ord('q') :
         break
+writer.release()
