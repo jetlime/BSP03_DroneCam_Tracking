@@ -29,7 +29,6 @@ width = 960
 now = datetime.now()
 dateTime = now.strftime("%d_%m_%Y_%H_%M_%S")
 
-writer= cv2.VideoWriter('C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/videos/' + dateTime + 'Tello.avi', cv2.VideoWriter_fourcc(*'DIVX'), 20, (width,height))
 # variables required for tracking and detection mix
 recognisedFace = (0,0,0,0)
 timing = True 
@@ -58,7 +57,7 @@ root2.geometry('1366x768')
 
 
 def pixelsToCm(x) :
-    y = x/5
+    y = x/3
     if 0< y < 20 :
         return 20
     elif -20 < y < 0 :
@@ -171,6 +170,10 @@ def labelling() :
             pass
         if batteryLevel > 50 :
             s.configure("TProgressbar", foreground='red', background='green')
+        elif batteryLevel < 10 :
+            s.configure("TProgressbar", foreground='red', background='orange')
+            messagebox.showinfo("Low Battery","Drone will land due to low battery, please recharge your drone !")
+            me.land()
         elif batteryLevel > 20 and batteryLevel <= 50 :
             s.configure("TProgressbar", foreground='red', background='orange')
         else :
@@ -197,7 +200,7 @@ def labelling() :
             label4.place(x = 30, y = 60)
         except : 
             pass
-        time.sleep(2)
+        time.sleep(1)
 
 labellingThread = threading.Thread(target= labelling)
 labellingThread.start()
@@ -293,6 +296,8 @@ def updateRecordVideo() :
 
 def finishVideo() :
     messagebox.showinfo("Information","Picture was taken")
+    writer= cv2.VideoWriter('C:/Users/jeane/Documents/semestre3/BSP3/Code/bsp03/Tello/videos/' + dateTime + 'Tello.avi', cv2.VideoWriter_fourcc(*'DIVX'), 20, (width,height))
+
     writer.release()
 
 def streamBegin() :  
@@ -365,40 +370,7 @@ def streamBegin() :
                             cv2.rectangle(myFrame, (x,y), (x+w, y+h), (255,0,0), 3, 1)
                             cv2.putText(myFrame, "Recognition", (175,75), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0,255,0), 2)
                             recognisedFace = (x,y,w,h)   
-                            if middle_x < 400:
-                                #print("Go left")
-                                dir = 1
-                            elif middle_x > 500 :
-                                #print("Go right")
-                                dir = 2
-                            elif middle_y < 190 :
-                                #print("Go up")
-                                dir = 3 
-                            elif middle_y > 210:
-                                #print("Go Down")
-                                dir = 4
-                            elif w > 270 :
-                                dir = 5
-                            elif w < 250 :
-                                dir = 6
-                            else :
-                                dir = 0
-                            
-                            if dir == 1 : 
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = pixelsToCm(distance_x)
-                            elif dir == 2 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = pixelsToCm(distance_x)
-                            elif dir == 3 : 
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = pixelsToCm(distance_y); me.yaw_velocity = 0
-                            elif dir == 4 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = pixelsToCm(distance_y); me.yaw_velocity = 0
-                            elif dir == 0 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
-                            elif dir == 5 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 30; me.up_down_velocity = 0; me.yaw_velocity = 0
-                            elif dir == 6 :
-                                me.left_right_velocity = 0; me.for_back_velocity = -30; me.up_down_velocity = 0; me.yaw_velocity = 0       
-                            
+                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity =  pixelsToCm(distance_y); me.yaw_velocity = pixelsToCm(distance_x)
                 reactThread = threading.Thread(target=react, args=(me.left_right_velocity, me.for_back_velocity, me.up_down_velocity, me.yaw_velocity))
                 
                 if me.send_rc_control :
@@ -420,42 +392,8 @@ def streamBegin() :
 
                 if followmode :   
                         if w > 30 :
-                            # middle of person
-                            middle_x = (x + (w/2))
-                            middle_y = (y + (h/2))
-                            if middle_x < 400:
-                                #print("Go left")
-                                dir = 1
-                            elif middle_x > 500 :
-                                #print("Go right")
-                                dir = 2
-                            elif middle_y < 190 :
-                                #print("Go up")
-                                dir = 3 
-                            elif middle_y > 210:
-                                #print("Go Down")
-                                dir = 4
-                            elif w > 270 :
-                                dir = 5
-                            elif w < 250 :
-                                dir = 6
-                            else :
-                                dir = 0
+                            me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = pixelsToCm(distance_y); me.yaw_velocity = pixelsToCm(distance_x)
                             
-                            if dir == 1 : 
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = pixelsToCm(distance_x)
-                            elif dir == 2 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = pixelsToCm(distance_x)
-                            elif dir == 3 : 
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = pixelsToCm(distance_y); me.yaw_velocity = 0
-                            elif dir == 4 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = pixelsToCm(distance_y); me.yaw_velocity = 0
-                            elif dir == 0 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 0; me.up_down_velocity = 0; me.yaw_velocity = 0
-                            elif dir == 5 :
-                                me.left_right_velocity = 0; me.for_back_velocity = 30; me.up_down_velocity = 0; me.yaw_velocity = 0
-                            elif dir == 6 :
-                                me.left_right_velocity = 0; me.for_back_velocity = -30; me.up_down_velocity = 0; me.yaw_velocity = 0       
                 reactThread = threading.Thread(target=react, args=(me.left_right_velocity, me.for_back_velocity, me.up_down_velocity, me.yaw_velocity))
                 
                 if me.send_rc_control :
