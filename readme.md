@@ -1,9 +1,18 @@
+# Person detection, tracking, and estimation using the onboard camera of a drone (aerial robots)
 BSP 03 of the student Paul Houssel 
+
+This project seeks to develop an autonomous
+drone able to recognise and follow a person. With the help of
+Artificial Intelligence we can detect the person's face we want to follow and
+track them, this useful tool has indeed an essential role in the
+scientific part.
 
 **-------------------------------------**
 
+
 This repository will explain the organisation of my technical 
 delivrable.
+
 
 In this repository you can find two folders :
 
